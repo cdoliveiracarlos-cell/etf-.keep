@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d1421">
+<title>Satrix Watch</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+</script>
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'&gt;&lt;rect width='64' height='64' rx='14' fill='%23e8442e'/&gt;&lt;text x='32' y='42' font-family='Arial' font-size='26' font-weight='800' fill='white' text-anchor='middle'&gt;Sx&lt;/text&gt;&lt;/svg&gt;">
+<style>
+  :root{
+    --bg:#0d1421; --card:#151c2c; --card2:#1b2438; --line:#222d44;
+    --txt:#eef2f8; --sub:#7d8aa5; --up:#16c784; --down:#ea3943;
+    --accent:#e8442e; --accent2:#f0a13c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    background:linear-gradient(150deg,#11182a 0%,#0d1421 55%,#141a2e 100%);
+    color:var(--txt); font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+    min-height:100vh; padding:14px; max-width:520px; margin:0 auto;
+  }
+  /* ---------- header ---------- */
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .logo{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:17px;color:#fff;
+  }
+  .brand h1{font-size:21px;font-weight:800;letter-spacing:-.3px}
+  .updated{font-size:12px;color:var(--sub);margin:2px 0 12px 44px;display:flex;gap:7px;align-items:center}
+  .updated button{background:none;border:none;color:var(--sub);font-size:14px;cursor:pointer}
+  .iconbtn{
+    background:var(--card2);border:1px solid var(--line);color:var(--txt);
+    width:34px;height:34px;border-radius:9px;font-size:18px;cursor:pointer;
+  }
+  /* ---------- table ---------- */
+  .cols{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);
+    padding:6px 4px;border-bottom:1px solid var(--line)}
+  .cols span:nth-child(2){margin-left:auto;margin-right:74px}
+  #list .row{
+    display:flex;align-items:center;gap:11px;padding:13px 4px;
+    border-bottom:1px solid var(--line);cursor:pointer;
+  }
+  #list .row:active{background:var(--card2)}
+  .icon{
+    width:40px;height:40px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;color:#fff;
+  }
+  .nm{min-width:0}
+  .nm b{font-size:16px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .nm span{font-size:12.5px;color:var(--sub)}
+  .px{margin-left:auto;text-align:right;flex:none}
+  .px b{font-size:16px;display:block}
+  .px span{font-size:13px;font-weight:700}
+  .pos{color:var(--up)} .neg{color:var(--down)}
+  svg.spark{flex:none;width:64px;height:36px}
+  /* ---------- settings panel ---------- */
+  .panel{
+    position:fixed;inset:0;background:rgba(8,12,22,.72);backdrop-filter:blur(3px);
+    display:none;align-items:flex-end;z-index:9;
+  }
+  .panel.open{display:flex}
+  .sheet{
+    background:var(--card);width:100%;max-width:520px;margin:0 auto;
+    border-radius:18px 18px 0 0;padding:18px 16px 26px;max-height:75vh;overflow:auto;
+  }
+  .sheet h2{font-size:16px;margin-bottom:4px}
+  .sheet p{font-size:12.5px;color:var(--sub);margin-bottom:14px}
+  .chk{display:flex;align-items:center;gap:11px;padding:11px 2px;border-bottom:1px solid var(--line);font-size:15px}
+  .chk input{width:19px;height:19px;accent-color:var(--accent)}
+  .chk .tk{color:var(--sub);font-size:12.5px;margin-left:auto}
+  /* ---------- detail view ---------- */
+  #detail{display:none}
+  .back{background:none;border:none;color:var(--sub);font-size:15px;cursor:pointer;padding:6px 0;margin-bottom:6px}
+  .dhead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .dhead .icon{width:46px;height:46px;font-size:12px}
+  .dhead h2{font-size:20px}
+  .dhead span{font-size:13px;color:var(--sub)}
+  .bigpx{font-size:32px;font-weight:800;letter-spacing:-.5px}
+  .bigchg{font-size:15px;font-weight:700;margin:2px 0 10px}
+  .periodchg{
+    display:flex;justify-content:space-between;align-items:baseline;
+    background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    padding:9px 13px;margin-bottom:6px;font-size:13px;color:var(--sub);
+  }
+  .periodchg b{font-size:18px;font-weight:800}
+  .perf{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 18px;
+  }
+  .perf .cell{
+    background:var(--card2);border:1px solid var(--line);border-radius:11px;
+    padding:9px 6px;text-align:center;
+  }
+  .perf .cell em{display:block;font-style:normal;font-size:11px;color:var(--sub);margin-bottom:3px}
+  .perf .cell b{font-size:14px}
+  .meta{font-size:13px;color:var(--sub);line-height:1.9}
+  .meta b{color:var(--txt);float:right}
+  #bigchart{width:100%;height:190px;margin:6px 0 4px}
+  .ranges{display:flex;gap:6px;margin-bottom:14px}
+  .ranges button{
+    flex:1;background:var(--card2);border:1px solid var(--line);color:var(--sub);
+    border-radius:8px;padding:7px 0;font-size:12.5px;font-weight:700;cursor:pointer;
+  }
+  .ranges button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .note{font-size:11px;color:#54617c;text-align:center;margin-top:18px}
+</style>
+</head>
+<body>
+
+<div id="dash">
+  <header>
+    <div class="brand"><div class="logo">Sx</div><h1>Satrix Watch</h1></div>
+    <button class="iconbtn" onclick="openPanel()">+</button>
+  </header>
+  <div class="updated">Last updated: <span id="ts"></span><button onclick="refresh()">&#x21bb;</button></div>
+  <div class="cols"><span>Fund</span><span>Price / 24h%</span><span>7d</span></div>
+  <div id="list"></div>
+  <div class="note">Demo data &middot; JSE 15-min delayed feed not yet connected</div>
+</div>
+
+<div id="detail">
+  <button class="back" onclick="showDash()">&#8592; Portfolio</button>
+  <div class="dhead">
+    <div class="icon" id="dIcon"></div>
+    <div><h2 id="dName"></h2><span id="dTicker"></span></div>
+  </div>
+  <div class="bigpx" id="dPrice"></div>
+  <div class="bigchg" id="dChg"></div>
+  <div class="periodchg" id="dPeriod"></div>
+  <svg id="bigchart" preserveAspectRatio="none"></svg>
+  <div class="ranges" id="ranges"></div>
+  <div class="perf" id="perfGrid"></div>
+  <div class="meta" id="dMeta"></div>
+</div>
+
+<div class="panel" id="panel" onclick="if(event.target===this)closePanel()">
+  <div class="sheet">
+    <h2>Live data</h2>
+    <p>Paste your published Google Sheet CSV link. Refresh then syncs live prices in the background.</p>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <input id="feedUrl" type="url" placeholder="https://docs.google.com/...output=csv"
+        style="flex:1;background:var(--card2);border:1px solid var(--line);border-radius:9px;
+        padding:10px 12px;color:var(--txt);font-size:13px;min-width:0">
+      <button onclick="setFeed()" style="background:var(--accent);border:none;border-radius:9px;
+        color:#fff;font-weight:700;padding:0 16px;font-size:13px;cursor:pointer">Save</button>
+    </div>
+    <p id="feedStat" style="margin-bottom:16px"></p>
+    <h2>Select funds</h2>
+    <p>Choose which ETFs appear on your dashboard.</p>
+    <div id="chkList"></div>
+  </div>
+</div>
+
+<script>
+// ---------------- DATA LAYER ----------------
+// Swap getQuotes() later for a real feed (Sheets sync / proxy / EasyEquities export).
+const FUNDS = [
+ {t:'STX40',  n:'Satrix 40',            c:'#e8442e', px:82.45,  d:-0.8, perf:{ '1W':-1.4,'1M':2.1,'3M':5.6,'6M':9.8,'1Y':14.2,'3Y':38.5,'5Y':62.1},ter:0.10,aum:'R12.4bn'},
+ {t:'STX500', n:'Satrix S&P 500',       c:'#2d6cdf', px:118.90, d:0.6,  perf:{'1W':0.9,'1M':3.4,'3M':7.2,'6M':12.5,'1Y':21.8,'3Y':54.3,'5Y':98.7},ter:0.25,aum:'R9.8bn'},
+ {t:'STXNDQ', n:'Satrix Nasdaq 100',    c:'#7a3cf0', px:145.60, d:1.2,  perf:{'1W':1.8,'1M':4.9,'3M':9.1,'6M':15.3,'1Y':27.4,'3Y':71.2,'5Y':131.5},ter:0.48,aum:'R6.2bn'},
+ {t:'STXWDM', n:'Satrix MSCI World',    c:'#0fa37f', px:91.20,  d:0.4,  perf:{'1W':0.7,'1M':2.8,'3M':6.4,'6M':11.0,'1Y':18.6,'3Y':47.9,'5Y':84.3},ter:0.35,aum:'R15.1bn'},
+ {t:'STXEMG', n:'Satrix MSCI EM',       c:'#d99114', px:88.23, d:0.85, perf:{'1W':-0.5,'1M':1.2,'3M':3.8,'6M':6.9,'1Y':9.4,'3Y':18.2,'5Y':24.6},ter:0.40,aum:'R2.1bn'},
+ {t:'STXIND', n:'Satrix INDI',          c:'#c2374f', px:137.40, d:-1.1, perf:{'1W':-2.0,'1M':1.6,'3M':4.4,'6M':8.1,'1Y':12.7,'3Y':31.4,'5Y':48.9},ter:0.45,aum:'R1.8bn'},
+ {t:'STXFIN', n:'Satrix FINI',          c:'#3a8fb0', px:21.05,  d:-0.6, perf:{'1W':-1.1,'1M':0.8,'3M':3.1,'6M':7.4,'1Y':15.9,'3Y':42.0,'5Y':55.2},ter:0.45,aum:'R1.2bn'},
+ {t:'STXRES', n:'Satrix RESI',          c:'#5d6b85', px:78.60,  d:1.9,  perf:{'1W':2.6,'1M':5.3,'3M':-1.8,'6M':4.2,'1Y':-3.5,'3Y':12.8,'5Y':41.7},ter:0.45,aum:'R1.5bn'},
+ {t:'STXDIV', n:'Satrix Divi Plus',     c:'#8a6d2f', px:32.90,  d:-0.4, perf:{'1W':-0.9,'1M':1.4,'3M':4.0,'6M':7.7,'1Y':13.1,'3Y':35.6,'5Y':50.4},ter:0.38,aum:'R2.9bn'},
+ {t:'STXPRO', n:'Satrix Property',      c:'#477a4e', px:4.12,   d:0.2,  perf:{'1W':0.3,'1M':2.2,'3M':6.8,'6M':13.4,'1Y':22.5,'3Y':28.7,'5Y':19.3},ter:0.40,aum:'R0.9bn'},
+ {t:'STXSWX', n:'Satrix SWIX Top 40',   c:'#b04a8f', px:16.20,  d:-0.7, perf:{'1W':-1.2,'1M':1.9,'3M':5.1,'6M':9.2,'1Y':13.6,'3Y':36.1,'5Y':57.8},ter:0.25,aum:'R3.4bn'},
+ {t:'STXMMT', n:'Satrix Momentum',      c:'#cf5a2e', px:29.80,  d:-0.5, perf:{'1W':-0.8,'1M':2.6,'3M':6.1,'6M':11.7,'1Y':19.2,'3Y':45.8,'5Y':70.4},ter:0.40,aum:'R0.7bn'},
+ {t:'STXQUA', n:'Satrix Quality SA',    c:'#2e8f74', px:34.10,  d:-0.2, perf:{'1W':-0.4,'1M':1.7,'3M':4.6,'6M':8.8,'1Y':14.9,'3Y':33.2,'5Y':52.6},ter:0.40,aum:'R0.6bn'},
+ {t:'STXGOV', n:'Satrix SA Bond',       c:'#6d7f3a', px:10.85,  d:0.1,  perf:{'1W':0.2,'1M':1.1,'3M':2.9,'6M':5.4,'1Y':10.8,'3Y':27.5,'5Y':38.2},ter:0.25,aum:'R1.1bn'},
+ {t:'STXCHN', n:'Satrix MSCI China',    c:'#a33232', px:22.40,  d:1.4,  perf:{'1W':2.1,'1M':4.2,'3M':8.7,'6M':3.5,'1Y':-2.8,'3Y':-11.4,'5Y':-18.9},ter:0.55,aum:'R0.8bn'},
+ {t:'STXIFR', n:'Satrix Infrastructure',c:'#3f6ea3', px:11.75,  d:0.3,  perf:{'1W':0.5,'1M':1.8,'3M':4.9,'6M':9.5,'1Y':16.3,'3Y':39.7,'5Y':61.2},ter:0.45,aum:'R0.5bn'},
+ {t:'STXHLT', n:'Satrix Healthcare',    c:'#46a3a0', px:15.30,  d:-0.1, perf:{'1W':-0.2,'1M':1.3,'3M':3.6,'6M':7.2,'1Y':11.5,'3Y':24.8,'5Y':36.4},ter:0.45,aum:'R0.4bn'},
+ // --- other JSE ETFs ---
+ {t:'ETF5IT', n:'1nvest S&P500 Info Tech',c:'#1f7ac2', px:39.59, d:-3.01, perf:{'1W':1.6,'1M':4.5,'3M':8.9,'6M':14.8,'1Y':26.1,'3Y':68.4,'5Y':124.7},ter:0.35,aum:'R1.6bn'},
+ {t:'SYG4IR', n:'Sygnia 4th Industrial Rev',c:'#e0b13a', px:63.15, d:-0.61, perf:{'1W':1.2,'1M':3.8,'3M':7.5,'6M':12.9,'1Y':22.3,'3Y':49.6,'5Y':88.1},ter:0.46,aum:'R4.2bn'},
+ {t:'GLOBAL', n:'10X Total World Stock',  c:'#2a9d6e', px:18.17, d:-0.98, perf:{'1W':-0.6,'1M':2.4,'3M':5.9,'6M':10.6,'1Y':17.9,'3Y':45.2,'5Y':79.8},ter:0.29,aum:'R3.0bn'},
+ // --- USD ETFs ---
+ {t:'BLOK', n:'Amplify Blockchain',     c:'#5b4fd1', px:62.16, d:-1.49, ccy:'USD', perf:{'1W':3.1,'1M':6.8,'3M':12.4,'6M':18.9,'1Y':31.2,'3Y':42.7,'5Y':28.4},ter:0.76,aum:'$842m'},
+ {t:'WGMI', n:'Valkyrie BTC Miners',    c:'#d1844f', px:21.76, d:4.1, ccy:'USD', perf:{'1W':5.8,'1M':9.2,'3M':-4.6,'6M':22.4,'1Y':48.7,'3Y':110.3,'5Y':0},ter:0.75,aum:'$310m'},
+ {t:'SOXX', n:'iShares Semiconductor',  c:'#3a9c5a', px:553.90, d:-3.07, ccy:'USD', perf:{'1W':2.2,'1M':5.4,'3M':11.8,'6M':19.6,'1Y':34.5,'3Y':89.2,'5Y':168.4},ter:0.35,aum:'$13.8bn'},
+ {t:'IBLC', n:'iShares Blockchain Tech',c:'#4671c4', px:42.88, d:2.8, ccy:'USD', perf:{'1W':3.6,'1M':7.4,'3M':14.2,'6M':24.8,'1Y':38.9,'3Y':56.1,'5Y':0},ter:0.47,aum:'$95m'},
+ {t:'BKCH', n:'Global X Blockchain',    c:'#8f3ac4', px:48.21, d:3.2, ccy:'USD', perf:{'1W':4.4,'1M':8.6,'3M':15.7,'6M':28.3,'1Y':44.6,'3Y':62.8,'5Y':0},ter:0.50,aum:'$178m'},
+ {t:'CORZ', n:'Core Scientific',        c:'#c43a6e', px:14.92, d:5.6, ccy:'USD', perf:{'1W':7.2,'1M':12.8,'3M':-8.4,'6M':31.5,'1Y':68.2,'3Y':0,'5Y':0},ter:0,aum:'$4.5bn'},
+ {t:'IGDT', n:'iShares Digital Infra',  c:'#3aa8c4', px:35.64, d:0.9, ccy:'USD', perf:{'1W':1.4,'1M':3.2,'3M':6.8,'6M':11.4,'1Y':19.8,'3Y':0,'5Y':0},ter:0.41,aum:'$62m'},
+ {t:'DTCR', n:'GlobalX Data Ctr REITs', c:'#6e8a3a', px:16.85, d:0.5, ccy:'USD', perf:{'1W':0.8,'1M':2.4,'3M':5.6,'6M':9.8,'1Y':16.4,'3Y':21.7,'5Y':0},ter:0.50,aum:'$48m'},
+ {t:'IBIT', n:'iShares Bitcoin Trust',  c:'#1a1a2e', px:35.18, d:3.8, ccy:'USD', perf:{'1W':4.9,'1M':-6.2,'3M':-12.8,'6M':8.4,'1Y':42.1,'3Y':0,'5Y':0},ter:0.25,aum:'$52.6bn'},
+ {t:'BITQ', n:'Bitwise Crypto Industry',c:'#d14f9c', px:12.34, d:4.6, ccy:'USD', perf:{'1W':6.1,'1M':10.4,'3M':-9.2,'6M':18.7,'1Y':52.8,'3Y':74.5,'5Y':0},ter:0.85,aum:'$142m'},
+];
+const LS='satrix.sel';
+const LSURL='satrix.feed';
+let sel = JSON.parse(localStorage.getItem(LS)||'null') || ['STX40','STX500','STXNDQ','STXWDM'];
+let cur=null, curRange='1M', liveOK=false;
+
+// ---- live feed: published Google Sheet CSV ----
+// expected columns: ticker,price,d,1W,1M,3M,6M,1Y,3Y,5Y
+async function loadLive(){
+  const url=localStorage.getItem(LSURL);
+  const stat=document.getElementById('feedStat');
+  if(!url){ if(stat&&document.getElementById('panel').classList.contains('open')){stat.textContent='Not connected — showing demo data';stat.style.color='var(--accent)';} return; }
+  document.getElementById('ts').textContent='syncing…';
+  try{
+    const r=await fetch(url,{cache:'no-store'});
+    const txt=await r.text();
+    const lines=txt.trim().split(/\r?\n/).slice(1);
+    let hits=0;
+    for(const ln of lines){
+      const c=ln.split(',').map(s=>s.replace(/^"|"$/g,'').trim());
+      const f=FUNDS.find(x=>x.t===c[0].toUpperCase());
+      if(!f) continue;
+      const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n};
+      if(num(c[1])!==null) f.px=num(c[1]);
+      if(num(c[2])!==null) f.d=num(c[2]);
+      ['1W','1M','3M','6M','1Y','3Y','5Y'].forEach((k,i)=>{ if(num(c[3+i])!==null) f.perf[k]=num(c[3+i]); });
+      hits++;
+    }
+    liveOK=hits>0;
+    if(stat){stat.textContent=liveOK?`Connected — ${hits} funds synced`:'Connected but no matching tickers found';stat.style.color=liveOK?'var(--up)':'var(--accent)';}
+  }catch(e){
+    liveOK=false;
+    if(stat){stat.textContent='Could not reach the sheet — check the URL is the published CSV link';stat.style.color='var(--down)';}
+  }
+  renderList();
+  if(cur && document.getElementById('detail').style.display==='block') openDetail(cur.t);
+}
+function setFeed(){
+  const u=(document.getElementById('feedUrl').value||'').trim();
+  if(u) localStorage.setItem(LSURL,u); else localStorage.removeItem(LSURL);
+  document.getElementById('feedStat').textContent='Connecting…';
+  loadLive();
+}
+
+// deterministic pseudo series per fund+range
+function series(f,n,trendPct){
+  let s=[],v=100,seed=f.t.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280-.5};
+  const drift=trendPct/100/n;
+  for(let i=0;i<n;i++){v*=1+drift+rnd()*0.012;s.push(v)}
+  return s;
+}
+function spark(s,w,h,color){
+  const mn=Math.min(...s),mx=Math.max(...s),r=mx-mn||1;
+  const pts=s.map((v,i)=>`${(i/(s.length-1)*w).toFixed(1)},${(h-2-(v-mn)/r*(h-4)).toFixed(1)}`).join(' ');
+  return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"/>`;
+}
+function fmtP(f){const v=f.px;const sym=f.ccy==='USD'?'$':'R';
+  return sym+v.toLocaleString('en-ZA',{minimumFractionDigits:v<1000?2:0,maximumFractionDigits:v<1000?2:0});}
+function tick(f){return f.t.startsWith('STX')?f.t.replace('STX','')||'40':f.t.slice(0,4);}
+function chg(v){const c=v>=0?'pos':'neg',a=v>=0?'&#9650;':'&#9660;';return `<span class="${c}">${Math.abs(v).toFixed(1)}% ${a}</span>`;}
+
+// ---------------- DASHBOARD ----------------
+function renderList(){
+  document.getElementById('list').innerHTML = FUNDS.filter(f=>sel.includes(f.t)).map(f=>{
+    const s=series(f,30,f.perf['1W']*1.5);
+    const col=f.perf['1W']>=0?'var(--up)':'var(--down)';
+    return `<div class="row" onclick="openDetail('${f.t}')">
+      <div class="icon" style="background:${f.c}">${tick(f)}</div>
+      <div class="nm"><b>${f.n}</b><span>${f.t}</span></div>
+      <div class="px"><b>${fmtP(f)}</b>${chg(f.d)}</div>
+      <svg class="spark" viewBox="0 0 64 36" preserveAspectRatio="none">${spark(s,64,36,col)}</svg>
+    </div>`;
+  }).join('');
+  document.getElementById('ts').textContent=new Date().toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'});
+  document.querySelector('.note').innerHTML=liveOK
+    ?'Live via Google Sheets &middot; <a href="#" onclick="openPanel();return false" style="color:#7d8aa5">settings</a>'
+    :'Demo data &middot; <a href="#" onclick="openPanel();return false" style="color:#e8442e">connect live feed</a>';
+}
+function refresh(){loadLive();renderList();}
+
+// ---------------- SELECTOR ----------------
+function openPanel(){
+  const row=f=>`<label class="chk"><input type="checkbox" ${sel.includes(f.t)?'checked':''} onchange="toggle('${f.t}',this.checked)">
+    ${f.n}<span class="tk">${f.t}</span></label>`;
+  const jse=FUNDS.filter(f=>f.ccy!=='USD'),usd=FUNDS.filter(f=>f.ccy==='USD');
+  document.getElementById('chkList').innerHTML=
+    `<div style="font-size:12px;color:var(--sub);font-weight:700;margin:6px 0 2px">JSE · ZAR</div>`+jse.map(row).join('')+
+    `<div style="font-size:12px;color:var(--sub);font-weight:700;margin:14px 0 2px">US · USD</div>`+usd.map(row).join('');
+  document.getElementById('feedUrl').value=localStorage.getItem(LSURL)||'';
+  document.getElementById('feedStat').textContent=liveOK?'Connected — live data active':'Not connected — showing demo data';
+  document.getElementById('feedStat').style.color=liveOK?'var(--up)':'var(--accent)';
+  document.getElementById('panel').classList.add('open');
+}
+function closePanel(){document.getElementById('panel').classList.remove('open');renderList();}
+function toggle(t,on){ sel=on?[...sel,t]:sel.filter(x=>x!==t); localStorage.setItem(LS,JSON.stringify(sel)); }
+
+// ---------------- DETAIL ----------------
+const RANGES={'1D':24,'1W':14,'1M':30,'3M':60,'6M':90,'1Y':120,'3Y':150,'5Y':180};
+function perfFor(f,r){return r==='1D'?f.d:(f.perf[r]||0);}
+function openDetail(t){
+  cur=FUNDS.find(f=>f.t===t);
+  document.getElementById('dash').style.display='none';
+  document.getElementById('detail').style.display='block';
+  const i=document.getElementById('dIcon'); i.style.background=cur.c; i.textContent=tick(cur);
+  document.getElementById('dName').textContent=cur.n;
+  document.getElementById('dTicker').textContent=cur.t+(cur.ccy==='USD'?' · US':' · JSE');
+  document.getElementById('dPrice').textContent=fmtP(cur);
+  document.getElementById('dChg').innerHTML=chg(cur.d)+' <span style="color:var(--sub);font-weight:400">today</span>';
+  document.getElementById('perfGrid').innerHTML=
+    `<div class="cell"><em>1D</em><b class="${cur.d>=0?'pos':'neg'}">${cur.d>0?'+':''}${cur.d.toFixed(1)}%</b></div>`
+    +Object.entries(cur.perf).map(([k,v])=>
+    `<div class="cell"><em>${k}</em><b class="${v>=0?'pos':'neg'}">${v>0?'+':''}${v.toFixed(1)}%</b></div>`).join('')
+    +`<div class="cell"><em>TER</em><b>${cur.ter.toFixed(2)}%</b></div>`;
+  document.getElementById('dMeta').innerHTML=
+    `Fund size <b>${cur.aum}</b><br>Total expense ratio <b>${cur.ter.toFixed(2)}%</b><br>Exchange <b>${cur.ccy==='USD'?'NYSE/Nasdaq':'JSE'}</b><br>Currency <b>${cur.ccy||'ZAR'}</b>`;
+  setRange(curRange);
+  window.scrollTo(0,0);
+}
+function setRange(r){
+  curRange=r;
+  document.getElementById('ranges').innerHTML=Object.keys(RANGES).map(k=>
+    `<button class="${k===r?'on':''}" onclick="setRange('${k}')">${k}</button>`).join('');
+  const p=perfFor(cur,r);
+  document.getElementById('dPeriod').innerHTML=
+    `<span>${r==='1D'?'24h':r} growth</span><b class="${p>=0?'pos':'neg'}">${p>0?'+':''}${p.toFixed(1)}%</b>`;
+  const s=series(cur,RANGES[r],p);
+  const col=p>=0?'#16c784':'#ea3943';
+  const svg=document.getElementById('bigchart');
+  const w=svg.clientWidth||480,h=190;
+  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  const mn=Math.min(...s),mx=Math.max(...s),rg=mx-mn||1;
+  const pts=s.map((v,i)=>`${(i/(s.length-1)*w).toFixed(1)},${(h-6-(v-mn)/rg*(h-12)).toFixed(1)}`);
+  // grid: 4 horizontal + 4 vertical lines, with % labels relative to period start
+  let grid='';
+  for(let g=0;g<=4;g++){
+    const y=6+(h-12)*g/4;
+    const val=mx-rg*g/4;
+    const pct=((val/s[0])-1)*100;
+    grid+=`<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="#222d44" stroke-width="1"/>`;
+    grid+=`<text x="${w-3}" y="${y-3}" font-size="9" fill="#54617c" text-anchor="end">${pct>0?'+':''}${pct.toFixed(1)}%</text>`;
+  }
+  for(let g=1;g<4;g++){
+    const x=w*g/4;
+    grid+=`<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="#222d44" stroke-width="1" stroke-dasharray="3,4"/>`;
+  }
+  svg.innerHTML=`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${col}" stop-opacity=".25"/><stop offset="1" stop-color="${col}" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${grid}
+    <polygon points="0,${h} ${pts.join(' ')} ${w},${h}" fill="url(#g)"/>
+    <polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="2"/>`;
+}
+function showDash(){document.getElementById('detail').style.display='none';document.getElementById('dash').style.display='block';renderList();}
+
+renderList();
+loadLive();
+setInterval(loadLive,5*60*1000); // refresh every 5 min
+</script>
+</body>
+</html>
