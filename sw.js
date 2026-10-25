@@ -1,4 +1,4 @@
-const CACHE='etf-watch-v1';
+const CACHE='etf-watch-v3-2';
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./index.html','./manifest.json','./icon-192.png'])));
   self.skipWaiting();
@@ -9,12 +9,10 @@ self.addEventListener('activate',e=>{
 });
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
-  e.respondWith(
-    fetch(e.request).then(r=>{
-      if(e.request.url.startsWith(self.location.origin)){
-        const cl=r.clone(); caches.open(CACHE).then(c=>c.put(e.request,cl));
-      }
-      return r;
-    }).catch(()=>caches.match(e.request))
-  );
+  const u=e.request.url;
+  if(u.includes('script.google')||u.includes('docs.google')){e.respondWith(fetch(e.request));return;}
+  e.respondWith(fetch(e.request).then(r=>{
+    if(u.startsWith(self.location.origin)){const cl=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cl));}
+    return r;
+  }).catch(()=>caches.match(e.request)));
 });
