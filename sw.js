@@ -1,4 +1,5 @@
-const CACHE='etf-watch-v3-3';
+
+const CACHE='etf-watch-v3-4';
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./index.html','./manifest.json','./icon-192.png'])));
   self.skipWaiting();
@@ -16,3 +17,4 @@ self.addEventListener('fetch',e=>{
     return r;
   }).catch(()=>caches.match(e.request)));
 });
+ 
