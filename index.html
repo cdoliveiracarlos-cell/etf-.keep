@@ -32,10 +32,10 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').cat
   .row:active{transform:scale(.985)}
   .rank{width:18px;text-align:center;font-weight:800;font-size:13px;flex:none}
   .ic{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;color:#fff}
-  .nm{min-width:0}
-  .nm b{font-weight:700;font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:135px}
-  .nm span{font-size:12px}
-  .px{margin-left:auto;text-align:right}
+  .nm{min-width:0;flex:1}
+  .nm b{font-weight:700;font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nm span{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .px{margin-left:8px;text-align:right;flex:none;align-self:flex-end;padding-bottom:1px}
   .px b{font-weight:700;font-size:15px;display:block}
   .px span{font-size:12.5px;font-weight:700}
   svg.sp{flex:none;width:52px;height:34px}
@@ -129,7 +129,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').cat
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VER='3.2';
+const APP_VER='3.3';
 function isScript(u){return /script\.google|\/exec/.test(u||'');}
 
 // ---------------- FUNDS ----------------
@@ -256,7 +256,7 @@ function setSection(s){
   history.pushState({v:'section',s:s},'');
 }
 
-function sparkSVG(f,w,h){const c=(f.perf['1W']??0)>=0?th().up:th().dn;const s=series(f,44,f.perf['1W']??0);
+function sparkSVG(f,w,h,period){const p=period||'1W';const val=perfFor(f,p);const c=val>=0?th().up:th().dn;const s=series(f,44,val);
   const glow=th().glow===2?'filter:drop-shadow(0 0 5px '+c+')':(th().glow===1?'filter:drop-shadow(0 0 3px '+c+'88)':'');
   return '<svg class="sp" viewBox="0 0 '+w+' '+h+'" style="'+glow+'"><path d="'+smooth(toPts(s,w,h,2))+'" fill="none" stroke="'+c+'" stroke-width="'+th().sw+'" stroke-linejoin="round" stroke-linecap="round"/></svg>';}
 
@@ -269,7 +269,7 @@ function renderDash(){
       '<div class="ic" style="background:'+f.c+';border-radius:'+t.icR+';'+(t.glow?'box-shadow:0 4px 10px '+f.c+'66':'')+'">'+tick(f)+'</div>'+
       '<div class="nm"><b style="color:'+t.txt+';'+m+'">'+f.n+'</b><span style="color:'+t.sub+';'+m+'">'+f.t+' &middot; <span style="color:'+(rp>=0?t.up:t.dn)+';font-weight:700">'+sortPeriod+' '+(rp>0?'+':'')+rp.toFixed(1)+'%</span></span></div>'+
       '<div class="px"><b style="color:'+t.txt+';'+m+'">'+fmtP(f)+'</b><span style="color:'+(f.d>=0?t.up:t.dn)+'">'+(f.d>=0?'+':'')+f.d.toFixed(1)+'% '+(f.d>=0?'▲':'▼')+'</span></div>'+
-      sparkSVG(f,52,34)+'</div>';}).join('');
+      sparkSVG(f,52,34,sortPeriod)+'</div>';}).join('');
   const sortBtns=SORTS.map(s=>{const on=s===sortPeriod;
     return '<button onclick="setSort(\''+s+'\')" style="border-color:'+(on?t.accent:t.fieldBd)+';background:'+(on?t.accent:'transparent')+';color:'+(on?'#fff':t.sub)+';'+m+'">'+s+'</button>';}).join('');
   const empty=list.length===0?'<div style="text-align:center;color:'+t.sub+';padding:40px 10px;font-size:14px">No funds selected yet.<br>Tap + to choose funds.</div>':'';
@@ -281,7 +281,7 @@ function renderDash(){
     '<div class="plus" style="color:'+t.sub+'" onclick="openPanel()">+</div></div>'+
     '<div class="upd" style="color:'+t.sub+'">Updated <span id="ts">--:--</span> <button style="color:'+t.sub+'" onclick="refresh()">&#x21bb;</button></div>'+
     '<div class="sortbar"><span class="lbl" style="color:'+t.sub+';'+m+'">Rank by</span><div class="sortscroll">'+sortBtns+'</div></div>'+
-    (list.length?'<div class="cols" style="color:'+t.sub+'"><span>&nbsp;&nbsp;&nbsp;Fund</span><span>Price / 24h</span><span>7d</span></div>':'')+
+    (list.length?'<div class="cols" style="color:'+t.sub+'"><span>&nbsp;&nbsp;&nbsp;Fund</span><span>Price / 24h</span><span>'+sortPeriod+'</span></div>':'')+
     rows+empty+
     '<div id="noteLine" style="text-align:center;color:'+t.sub+';font-size:11px;margin-top:12px;line-height:1.8"></div>'+
     '</div></div>';
