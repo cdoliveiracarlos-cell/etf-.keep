@@ -124,14 +124,14 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').cat
 <body>
 <div class="wrap"><div id="app"></div></div>
 <div class="nav" id="nav"></div>
-<div class="panel" id="panel"><div class="sheet" id="sheetBox"></div></div>
-<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<div class="panel" id="panel" onclick="if(event.target===this)closePanel()"><div class="sheet" id="sheetBox"></div></div>
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="mbox" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-
+ 
 <script>
-const APP_VER='3.3';
+const APP_VER='3.4';
 function isScript(u){return /script\.google|\/exec/.test(u||'');}
-
+ 
 // ---------------- FUNDS ----------------
 const FUNDS=[
  {t:'STX40',n:'Satrix 40',c:'#e8442e',px:82.45,d:-0.8,perf:{'1W':-1.4,'1M':2.1,'3M':5.6,'6M':9.8,'1Y':14.2,'2Y':26.1,'3Y':38.5},ter:0.10,aum:'R12.4bn'},
@@ -178,7 +178,7 @@ const CATALOG=[
 ];
 const PALETTE=['#e8442e','#2d6cdf','#0fa37f','#d99114','#7a3cf0','#c2374f','#3a8fb0','#b04a8f','#2e8f74','#cf5a2e'];
 const LS='satrix.sel',LSURL='satrix.feed',LSTHEME='etf.theme',LSCUST='etf.custom',LSHOLD='etf.hold',LSSORT='etf.sort';
-
+ 
 // ---------------- THEMES ----------------
 const UP='#16c784',DN='#ea3943';
 const T={
@@ -187,7 +187,7 @@ const T={
  aurora:{bg:'linear-gradient(135deg,#2d1b5e 0%,#1a2a6c 45%,#0f3443 100%)',card:'rgba(10,14,32,.5)',cardBd:'1px solid rgba(255,255,255,.08)',cardSh:'0 6px 16px rgba(0,0,0,.25)',radius:'15px',txt:'#f3f0ff',sub:'#a7a3d0',line:'rgba(255,255,255,.08)',icR:'50%',glow:1,up:'#5cf2c0',dn:'#ff7a9c',accent:'#c44bd6',field:'rgba(255,255,255,.06)',fieldBd:'rgba(255,255,255,.14)',cell:'rgba(255,255,255,.06)',logo:'linear-gradient(135deg,#c44bd6,#5cf2c0)',sheet:'#1a1733',sw:1.6,statusbar:'#2d1b5e'},
 };
 const TNAMES={glass:'Glass',neon:'Neon',aurora:'Aurora'};
-
+ 
 // ---------------- STATE ----------------
 let sel=JSON.parse(localStorage.getItem(LS)||'null')||['STX40','STX500','STXNDQ','STXWDM','SOXX','STXEMG'];
 let holdings=JSON.parse(localStorage.getItem(LSHOLD)||'{}');
@@ -196,7 +196,7 @@ let sortPeriod=localStorage.getItem(LSSORT)||'1M';
 let cur=null,curRange='1M',liveOK=false,view='dash';
 const SORTS=['1D','1W','1M','3M','6M','1Y','2Y','3Y'];
 (JSON.parse(localStorage.getItem(LSCUST)||'[]')).forEach(cf=>{if(!FUNDS.find(f=>f.t===cf.t))FUNDS.push(cf);});
-
+ 
 // ---------------- SECTIONS / PORTFOLIOS / COMPARE ----------------
 const LSPORT='etf.portfolios',LSPI='etf.pi',LSFX='etf.fx';
 let section='watch'; // watch | port | compare
@@ -207,7 +207,7 @@ let portfolios=JSON.parse(localStorage.getItem(LSPORT)||'null')||[
 let pi=parseInt(localStorage.getItem(LSPI))||0;
 let cmpA='STX500',cmpB='STXNDQ',cmpRange='1Y';
 function savePort(){localStorage.setItem(LSPORT,JSON.stringify(portfolios));localStorage.setItem(LSPI,pi);}
-
+ 
 // ---------------- HELPERS ----------------
 function th(){return T[theme];}
 function mono(){return th().mono?'font-family:ui-monospace,monospace':'';}
@@ -230,7 +230,7 @@ function smooth(pts){if(pts.length<3)return 'M'+pts.map(p=>p[0]+','+p[1]).join('
   let d='M'+pts[0][0]+','+pts[0][1];
   for(let i=1;i<pts.length-1;i++){const xc=(pts[i][0]+pts[i+1][0])/2,yc=(pts[i][1]+pts[i+1][1])/2;d+=' Q'+pts[i][0]+','+pts[i][1]+' '+xc+','+yc;}
   const l=pts[pts.length-1];return d+' L'+l[0]+','+l[1];}
-
+ 
 // ---------------- RENDER ----------------
 function setTheme(k,save){theme=k;document.body.style.background=th().bg;
   const mt=document.querySelector('meta[name=theme-color]');if(mt)mt.setAttribute('content',th().statusbar);
@@ -255,11 +255,11 @@ function setSection(s){
   render();window.scrollTo(0,0);
   history.pushState({v:'section',s:s},'');
 }
-
+ 
 function sparkSVG(f,w,h,period){const p=period||'1W';const val=perfFor(f,p);const c=val>=0?th().up:th().dn;const s=series(f,44,val);
   const glow=th().glow===2?'filter:drop-shadow(0 0 5px '+c+')':(th().glow===1?'filter:drop-shadow(0 0 3px '+c+'88)':'');
   return '<svg class="sp" viewBox="0 0 '+w+' '+h+'" style="'+glow+'"><path d="'+smooth(toPts(s,w,h,2))+'" fill="none" stroke="'+c+'" stroke-width="'+th().sw+'" stroke-linejoin="round" stroke-linecap="round"/></svg>';}
-
+ 
 function renderDash(){
   const t=th(),m=mono();const list=rankedFunds();
   const rows=list.map((f,i)=>{const rp=perfFor(f,sortPeriod);
@@ -290,7 +290,7 @@ function renderDash(){
 }
 function setSort(p){sortPeriod=p;localStorage.setItem(LSSORT,p);toast('Ranked by '+p);renderDash();}
 function refresh(){loadLive();loadPortfolios();}
-
+ 
 // ---------------- DETAIL ----------------
 const RANGES={'1D':48,'1W':60,'1M':90,'3M':120,'6M':150,'1Y':170,'2Y':185,'3Y':200};
 function openDetail(t2,fromPop){cur=FUNDS.find(f=>f.t===t2);if(!cur)return;view='detail';render();window.scrollTo(0,0);
@@ -350,7 +350,7 @@ function renderHold(){
 function startHold(){const amt=parseFloat(document.getElementById('holdAmt').value);if(!amt||amt<=0){toast('Enter an amount first');return;}
   holdings[cur.t]={amt,px0:cur.px,date:new Date().toLocaleDateString('en-ZA')};localStorage.setItem(LSHOLD,JSON.stringify(holdings));toast('Tracking started');renderHold();}
 function clearHold(){delete holdings[cur.t];localStorage.setItem(LSHOLD,JSON.stringify(holdings));toast('Tracking stopped');renderHold();}
-
+ 
 // ---------------- PORTFOLIOS ----------------
 function pxRand(f){return f.ccy==='USD'?f.px*FX:f.px;}
 function fundStats(tk,contribs){
@@ -507,7 +507,7 @@ function showModal(title,inner,onOk){
 function closeModal(fromPop){document.getElementById('modal').classList.remove('open');modalOK=null;
   if(!fromPop&&history.state&&history.state.v==='modal')history.back();}
 function okModal(){if(modalOK&&modalOK()===false)return;closeModal();render();}
-
+ 
 // ---------------- LIVE FEED ----------------
 async function loadLive(){
   const url=localStorage.getItem(LSURL),stat=document.getElementById('feedStat');
@@ -539,7 +539,7 @@ async function setFeed(){
   }
   loadLive();loadPortfolios();
 }
-
+ 
 // ---------------- ADD / SELECT ----------------
 function saveSel(){localStorage.setItem(LS,JSON.stringify(sel));}
 function fillCatalog(){const have=new Set(FUNDS.map(f=>f.t));
@@ -574,6 +574,8 @@ function renderChk(){const t=th();
 function openPanel(){
   const t=th();document.getElementById('sheetBox').style.background=t.sheet;
   document.getElementById('sheetBox').innerHTML=
+    '<div style="display:flex;align-items:center;margin-bottom:4px"><h3 style="color:'+t.txt+';margin:0;font-size:17px">Settings</h3>'+
+    '<button onclick="closePanel()" style="margin-left:auto;background:'+t.field+';border:1px solid '+t.fieldBd+';color:'+t.txt+';width:34px;height:34px;border-radius:9px;font-size:18px;cursor:pointer;line-height:1">&times;</button></div>'+
     '<h3 style="color:'+t.txt+'">Live data</h3>'+
     '<p style="color:'+t.sub+'">Paste your Apps Script /exec link (funds auto-add to the sheet) or a published CSV link.</p>'+
     '<div class="fr"><input id="feedUrl" type="url" placeholder="https://script.google.com/.../exec" style="background:'+t.field+';border-color:'+t.fieldBd+';color:'+t.txt+'"><button class="go" style="background:'+t.accent+'" onclick="setFeed()">Save</button></div>'+
@@ -586,7 +588,8 @@ function openPanel(){
     '<div class="fr" id="customRow" style="display:none"><input id="custName" placeholder="Fund name" style="background:'+t.field+';border-color:'+t.fieldBd+';color:'+t.txt+'"><select id="custCcy" style="background:'+t.field+';border-color:'+t.fieldBd+';color:'+t.txt+'"><option value="ZAR">JSE</option><option value="USD">US</option></select><button class="go" style="background:'+t.accent+'" onclick="addCustom()">OK</button></div>'+
     '<p id="addHint" style="display:none;color:'+t.accent+';font-size:11.5px">Tip: if not on a live sheet yet, add this ticker to column A of your sheet too.</p>'+
     '<h3 style="color:'+t.txt+'">Select funds</h3><p style="color:'+t.sub+'">Tick which funds appear on the dashboard.</p><div id="chkList"></div>'+
-    '<p style="text-align:center;color:'+t.sub+';margin-top:16px;font-size:12px">ETF Watch v'+APP_VER+'</p>';
+    '<button onclick="closePanel()" style="width:100%;margin-top:18px;background:'+t.accent+';border:none;color:#fff;padding:12px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer">Done</button>'+
+    '<p style="text-align:center;color:'+t.sub+';margin-top:12px;font-size:12px">ETF Watch v'+APP_VER+'</p>';
   renderThemes();fillCatalog();renderChk();
   const fu=document.getElementById('feedUrl');fu.value=localStorage.getItem(LSURL)||'';
   const st=document.getElementById('feedStat');st.textContent=liveOK?'Connected — live data active':'Not connected — showing demo data';st.style.color=liveOK?t.up:t.accent;
@@ -598,7 +601,7 @@ function renderThemes(){const t=th();
     return '<button onclick="setTheme(\''+k+'\',true)" style="border-color:'+(on?t.accent:t.fieldBd)+';background:'+t.field+';color:'+t.txt+'"><div class="sw" style="background:'+T[k].bg+'"></div>'+TNAMES[k]+'</button>';}).join('');}
 function closePanel(fromPop){document.getElementById('panel').classList.remove('open');
   if(!fromPop&&history.state&&history.state.v==='panel')history.back();render();}
-
+ 
 // ---------------- BACK BUTTON ----------------
 function goBack(){history.back();}
 window.addEventListener('popstate',function(){
@@ -608,7 +611,7 @@ window.addEventListener('popstate',function(){
   if(section!=='watch'){section='watch';view='dash';render();return;}
 });
 history.replaceState({v:'dash'},'');
-
+ 
 // ---------------- START ----------------
 document.body.style.background=th().bg;
 const mtc=document.querySelector('meta[name=theme-color]');if(mtc)mtc.setAttribute('content',th().statusbar);
@@ -618,3 +621,4 @@ window.setSection=setSection;window.setPi=setPi;window.openDeposit=openDeposit;w
 </script>
 </body>
 </html>
+ 
